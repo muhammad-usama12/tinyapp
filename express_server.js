@@ -10,6 +10,17 @@ app.get('/urls', (req, res) => {
   res.render("urls_index", templateVars)
 });
 
+app.get('/urls:id', (req, res) => {
+  const templateVars = { id: req.params.id, longUrl: "http://www.lighthouselabs.ca"};
+  res.render("urls_show", templateVars)
+});
+
+app.get('/urls:id', (req, res) => {
+  const templateVars = { id: req.params.id, longUrl: "http://www.google.com" };
+  res.render("urls_show", templateVars)
+});
+
+
 // app.get("/hello", (req, res) => {
 //   const templateVars = { greeting: "Hello World!" };
 //   res.render("hello_world", templateVars);
