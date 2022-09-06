@@ -1,8 +1,12 @@
+const { application } = require("express");
 const express = require("express");
 const app = express();
 const PORT = 8080;
 
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+
+function generateRandomString() {}
 
 
 app.get('/urls', (req, res) => {
@@ -15,14 +19,24 @@ app.get('/urls:id', (req, res) => {
   res.render("urls_show", templateVars)
 });
 
-app.get('/urls:id', (req, res) => {
-  const templateVars = { id: req.params.id, longUrl: "http://www.google.com" };
-  res.render("urls_show", templateVars)
-});
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+
+
+
+
+
+// app.get('/urls:id', (req, res) => {
+//   const templateVars = { id: req.params.id, longUrl: "http://www.google.com" };
+//   res.render("urls_show", templateVars)
+// });
 
 // app.get("/hello", (req, res) => {
 //   const templateVars = { greeting: "Hello World!" };
