@@ -22,7 +22,6 @@
       <h3>My URLs</h3>
       <table class="table">
         <thead>
-          <a href='/urls'>Sample</a>
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
@@ -33,6 +32,15 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
+              <td>
+              </td>
+              <td>
+                <form method="POST" action="/urls/<%= id %>/delete">
+                  <button type="submit" class="btn btn-outline-danger">
+                    Delete
+                  </button>
+                </form>
+            </td>
             </tr>
           <% } %>
         </tbody>
