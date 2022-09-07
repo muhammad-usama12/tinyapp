@@ -12,7 +12,11 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-function generateRandomString() {}
+function generateRandomString() {
+    return Math.random().toString(36).substring(2, 8);
+}; 
+
+//create a function that returns alpha numeric shortURL 
 
 
 
@@ -38,14 +42,24 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.post("/urls", (req, res) => {
-console.log(req.body);
-}); 
-
 app.get("/u/:id", (req, res) => {
 const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
+
+
+app.post("/urls", (req, res) => {
+  const longURL = req.body.longURL;
+if (!longURL) {
+  return res.statusCode(400).send("Error: No Request Found!")
+} 
+
+const newID = generateRandomString();
+urlDatabase[newID] = longURL 
+console.log(urlDatabase)
+res.redirect(`/urls/${newID}`)
+}); 
+
 
 
 app.listen(PORT, () => {
