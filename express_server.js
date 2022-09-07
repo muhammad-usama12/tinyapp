@@ -16,15 +16,9 @@ function generateRandomString() {
     return Math.random().toString(36).substring(2, 8);
 }; 
 
-//create a function that returns alpha numeric shortURL 
-
-
-
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-
-
 
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -32,17 +26,11 @@ app.get('/urls', (req, res) => {
 });
 
 
-// app.get('/urls:id', (req, res) => {
-//   const templateVars = { id: req.params.id, longURL: "http://www.lighthouselabs.ca"};
-//   res.render("urls_show", templateVars)
-// });
-
-
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/u/:id", (req, res) => {
+app.get("/u/:shortURL", (req, res) => {
 const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
@@ -54,12 +42,16 @@ if (!longURL) {
   return res.statusCode(400).send("Error: No Request Found!")
 } 
 
-const newID = generateRandomString();
-urlDatabase[newID] = longURL 
+const shortURL = generateRandomString();
+urlDatabase[shortURL] = longURL 
 console.log(urlDatabase)
-res.redirect(`/urls/${newID}`)
+res.redirect(`/urls/${shortURL}`)
 }); 
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL]
+  res.redirect('/urls');
+});
 
 
 app.listen(PORT, () => {
