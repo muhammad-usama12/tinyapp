@@ -20,10 +20,28 @@ function generateRandomString() {
     return Math.random().toString(36).substring(2, 8);
 }; 
 
+function generateRandomUserId() {
+  return Math.random().toString(36).substring(2, 8);
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -51,6 +69,13 @@ const longURL = urlDatabase[req.params.shortURL]
 res.redirect(longURL);
 });
 
+app.get("/register", (req, res) => {
+// const templateVars = 
+res.render("urls_register")
+});
+
+
+
 app.post("/login", (req, res) => {
 res.cookie('username', req.body.username);
   res.redirect('/urls');
@@ -61,6 +86,17 @@ app.post("/logout", (req, res) => {
   //clears previous user cookies (reset for new login info) 
   res.redirect('/urls');
 })
+
+app.post("/register", (req, res) => {
+const randomId = generateRandomString(); // generate a random user id
+// user_id containing cookie containing user's newly generated id!! 
+const { email, password } = req.body;
+users[randomId]= { id: randomId, email, password }
+res.cookie(`username`, randomId)
+console.log(randomId)
+res.redirect("/urls"); // redirects back to urls 
+});
+
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
