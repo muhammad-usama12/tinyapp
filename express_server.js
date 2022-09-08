@@ -20,10 +20,20 @@ function generateRandomString() {
     return Math.random().toString(36).substring(2, 8);
 }; 
 
-// const database = (userEmail, userDatabase) => {
-// // if email && password strings are empty -- response with 400 status code
-// // if email exists in user object -- response with 400 status code 
-// }; 
+const getUserByEmail = (userEmail, userDB) => {
+  for (let key in userDB) {
+    if (userDB[key].email === userEmail) {
+      return userDB[key]
+    }
+  } 
+  return null; 
+  
+
+// if email exists in user object database -- response with 400 status code 
+}; 
+
+// res.statusCode(400).send("Error!")
+// res.statusCode(400).send("Error!")
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -92,14 +102,18 @@ app.post("/logout", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
-if (email && password, str.length === 0) {
-  send.status(400).send('Error!')
+  const email = req.body.email;
+  const password = req.body.password;
+if (email == "" || email == null || password == "" || password == null) {
+  return res.status(400).send('Error: Email and Password cannot be empty')
+} 
+if (getUserByEmail(email, users)) {
+  return res.status(400).send('Error: Email already exists in the database')  
 }
-
 
   const randomId = generateRandomString(); // generate a random user id
 // user_id containing cookie containing user's newly generated id!! 
-const { email, password } = req.body;
+// const { email, password } = req.body;
 users[randomId]= { id: randomId, email, password }
 res.cookie(`user_id`, randomId)
 console.log(randomId)
