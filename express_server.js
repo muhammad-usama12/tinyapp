@@ -20,9 +20,10 @@ function generateRandomString() {
     return Math.random().toString(36).substring(2, 8);
 }; 
 
-function generateRandomUserId() {
-  return Math.random().toString(36).substring(2, 8);
-};
+// const database = (userEmail, userDatabase) => {
+// // if email && password strings are empty -- response with 400 status code
+// // if email exists in user object -- response with 400 status code 
+// }; 
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -48,19 +49,19 @@ app.get("/", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  const templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render("urls_index", templateVars)
 });
 
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] }
+  const templateVars = { user: users[req.cookies["user_id"]] }
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = {shortURL: req.params.shortURL, longURL, username: res.cookie("username") };
+  const templateVars = {shortURL: req.params.shortURL, longURL, user: users[res.cookie["user_id"]] };
   res.render("urls_show", templateVars);
 });
 
@@ -74,29 +75,36 @@ app.get("/register", (req, res) => {
 res.render("urls_register")
 });
 
+app.get("/login", (req, res) => {
 
+res.render("urls_login")
+});
 
 app.post("/login", (req, res) => {
-res.cookie('username', req.body.username);
+res.cookie('user_id', req.body.user_id);
   res.redirect('/urls');
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   //clears previous user cookies (reset for new login info) 
   res.redirect('/urls');
 })
 
 app.post("/register", (req, res) => {
-const randomId = generateRandomString(); // generate a random user id
+if (email && password, str.length === 0) {
+  send.status(400).send('Error!')
+}
+
+
+  const randomId = generateRandomString(); // generate a random user id
 // user_id containing cookie containing user's newly generated id!! 
 const { email, password } = req.body;
 users[randomId]= { id: randomId, email, password }
-res.cookie(`username`, randomId)
+res.cookie(`user_id`, randomId)
 console.log(randomId)
 res.redirect("/urls"); // redirects back to urls 
 });
-
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
