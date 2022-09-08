@@ -1,11 +1,12 @@
 const { application } = require("express");
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
-app.set("view engine", "ejs");
-
 app.use(express.urlencoded({ extended: true }));
+app.set("view engine", "ejs");
+app.use(cookieParser());
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -29,25 +30,37 @@ app.get("/", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
   res.render("urls_index", templateVars)
 });
 
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] }
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = {shortURL: req.params.shortURL, longURL };
+  const templateVars = {shortURL: req.params.shortURL, longURL, username: res.cookie("username") };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+const longURL = urlDatabase[req.params.shortURL]
+res.redirect(longURL);
 });
+
+app.post("/login", (req, res) => {
+res.cookie('username', req.body.username);
+  res.redirect('/urls');
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  //clears previous user cookies (reset for new login info) 
+  res.redirect('/urls');
+})
 
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
@@ -73,30 +86,11 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect('/urls');
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// app.get("/hello", (req, res) => {
-//   const templateVars = { greeting: "Hello World!" };
-//   res.render("hello_world", templateVars);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
+// function validateCookie(req, res, next) {
+//   const { cookies } = req;
+//   if ('username' in cookies) {
+//     console.log('username exists.')
+//     if (cookies.username === username) next(); 
+//     else res.status(403).send({ msg: 'Not Authenticated' });
+//   } res.status(403).send({ msg: 'Not Authenticated' });
+// }
