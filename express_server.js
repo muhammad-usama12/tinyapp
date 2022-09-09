@@ -27,13 +27,9 @@ const getUserByEmail = (userEmail, userDB) => {
     }
   } 
   return null; 
-  
-
-// if email exists in user object database -- response with 400 status code 
 }; 
 
-// res.statusCode(400).send("Error!")
-// res.statusCode(400).send("Error!")
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -81,19 +77,30 @@ res.redirect(longURL);
 });
 
 app.get("/register", (req, res) => {
-// const templateVars = 
-res.render("urls_register")
+  const templateVars = { user: users[req.cookies["user_id"]] }
+res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-
-res.render("urls_login")
+  const templateVars = { user: users[req.cookies["user_id"]] }
+res.render("urls_login", templateVars);
 });
+
 
 app.post("/login", (req, res) => {
-res.cookie('user_id', req.body.user_id);
+  const emailUsed = req.body['email']; 
+  const passwordUsed = req.body['password']; 
+  const usersCheck = getUserByEmail(emailUsed, users);
+  if (!usersCheck) {
+   return res.status(403).send('Email not found')
+  }
+  if (usersCheck.password !== passwordUsed) {
+  return res.status(403).send('Incorrect password')
+  }
+  res.cookie('user_id', usersCheck.id);
   res.redirect('/urls');
 });
+
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
@@ -123,7 +130,7 @@ res.redirect("/urls"); // redirects back to urls
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
 if (!longURL) {
-  return res.statusCode(400).send("Error: No Request Found!")
+  return res.statusCode(400).send("Error! No Request Found")
 } 
 
 const shortURL = generateRandomString();
