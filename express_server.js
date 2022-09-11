@@ -189,12 +189,13 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const userCheck = getUserByEmail(email, users);
+
   console.log(users);
   if (!userCheck) {
     return res.status(403).send('Email not found');
-  }
-  if (userCheck.password !== password) {
-    return res.status(403).send('Incorrect password');
+  } 
+if (!bcrypt.compareSync(password, userCheck.password)) {
+    return res.status(403).send('Incorrect password, please try again');
   }
   res.cookie("user_id", userCheck.id);
   res.redirect('/urls');
