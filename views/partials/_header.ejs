@@ -19,14 +19,14 @@
         <a href="/urls/new"><button type="button" class="btn btn-success">Create New URL</button></a>
       </div>
     </div>
-        <% if (!user) { %> 
+        <% if (!user_id) { %> 
           <ul style=" float: right;" class="nav nav-link">
           <a href="/login"><button type="button" class="btn btn-success">Login</button></a>
           </ul>
           <a href="/register"><button type="button" class="btn btn-success">Register</button></a>
         <% } %> 
-        <% if (user) { %>
-         <p>Logged in as: <%=user.email%></p>
+        <% if (user_id) { %>
+         <p>Logged in as: <%=user_id.email%></p>
             <form class="form-inline" method="post" action="/logout">
             <button class="btn btn-outline-danger my-sm-0">
              Logout</button>
