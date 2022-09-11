@@ -70,18 +70,19 @@ app.get("/", (req, res) => {
 
 
 app.get('/urls', (req, res) => {
-  const ownURL = urlsForUser(req.cookies["user_id"], urlDatabase);
-  const templateVars = { user_id: users[req.cookies["user_id"]], urls: ownURL };
+  const templateVars = { user_id: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render("urls_index", templateVars);
   
 });
+
+
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
 
 
-  urlDatabase[shortURL] = { longURL: longURL, userID: req.cookies["user_id"].id  };
+  urlDatabase[shortURL] = { id: shortURL, longURL: longURL, userID: req.cookies["user_id"] };
   // console.log(shortURL)
   // console.log(urlDatabase)
   res.redirect(`/urls/${shortURL}`);
@@ -110,7 +111,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user_id: users[res.cookie["user_id"]]};
+  const templateVars = { shortURL: shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user_id: users[req.cookies["user_id"]]};
   res.render("urls_show", templateVars);
 });
 
@@ -158,26 +159,27 @@ app.post("/urls/:shortURL", (req, res) => {
 // })
 });
 
+
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const randomId = generateRandomString();
- 
-  if (randomId) {
-    users[randomId] = {
-      id: randomId,
-      email: email,
-      password: password
-    };
-    if (email === "" || email === null || password === "" || password === null) {
+
+    if (email == "" || email == null || password == "" || password == null) {
       return res.status(400).send('Error: Email and Password cannot be empty');
     }
     if (getUserByEmail(email, users)) {
       return res.status(400).send('Error: Email already exists in the database');
     }
+    
+  const randomId = generateRandomString();
+  users[randomId] = { 
+    id: randomId,
+    email: email,
+    password: password 
   }
-  res.cookie(`user_id`, users[randomId]);
+  res.cookie("user_id", randomId);
   console.log(randomId);
+  console.log(users);
   res.redirect("/urls"); // redirects back to urls
 });
 
