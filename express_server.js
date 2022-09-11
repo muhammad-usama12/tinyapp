@@ -70,7 +70,7 @@ app.get("/", (req, res) => {
 
 
 app.get('/urls', (req, res) => {
-  const templateVars = { user_id: users[req.cookies["user_id"]], urls: urlDatabase };
+  const templateVars = { user_id: users[req.cookies['user_id']], urls: urlDatabase };
   res.render("urls_index", templateVars);
   
 });
@@ -163,6 +163,7 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
     if (email == "" || email == null || password == "" || password == null) {
       return res.status(400).send('Error: Email and Password cannot be empty');
@@ -175,7 +176,7 @@ app.post("/register", (req, res) => {
   users[randomId] = { 
     id: randomId,
     email: email,
-    password: password 
+    password: hashedPassword 
   }
   res.cookie("user_id", randomId);
   console.log(randomId);
