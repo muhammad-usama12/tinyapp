@@ -2,26 +2,24 @@ const { application } = require("express");
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers')
+const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers');
 const app = express();
 const PORT = 8080;
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 
-app.use(cookieSession({  
+app.use(cookieSession({
   name: 'session',
   keys: ['heisenberg'],
 
-// Cookie Options
-maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
-
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
-
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -55,56 +53,54 @@ app.get("/", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-    res.redirect('/login')
+    res.redirect('/login');
   } else {
-    res.redirect('/urls')
+    res.redirect('/urls');
   }
 });
 
 app.get('/urls', (req, res) => {
-  const currentUser = req.session.user_id
-  const user = users[currentUser];
-  const templateVars = { user_id: user, urls: urlsForUser(currentUser, urlDatabase) };
-  res.render("urls_index", templateVars); 
-});
-
-app.get("/urls/new", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
-  if (!currentUser) {
-  res.redirect("/login");
-  } else { 
-  const templateVars = { user_id: user };
-  res.render("urls_new", templateVars);
-  }
+  const templateVars = { user_id: user, urls: urlsForUser(currentUser, urlDatabase) };
+  res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-    res.redirect("/login")
+    res.redirect("/login");
   } else {
-  const id = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[id] = { id: id, longURL: longURL, userID: req.session.user_id };
-  // console.log(id)
-  // console.log(urlDatabase)
-  res.redirect(`/urls/${id}`);
+    const id = generateRandomString();
+    const longURL = req.body.longURL;
+    urlDatabase[id] = { id: id, longURL: longURL, userID: req.session.user_id };
+    res.redirect(`/urls/${id}`);
+  }
+});
+
+app.get("/urls/new", (req, res) => {
+  const currentUser = req.session.user_id;
+  const user = users[currentUser];
+  if (!currentUser) {
+    res.redirect("/login");
+  } else {
+    const templateVars = { user_id: user };
+    res.render("urls_new", templateVars);
   }
 });
 
 app.get("/urls/:id", (req, res) => {
   currentUser = req.session.user_id;
-  user = users[currentUser];
+  const user = users[currentUser];
   const id = req.params.id;
   const longURL = urlDatabase[id].longURL;
 
   if (user === urlDatabase[id]) {
     res.status(403).send(`This id isn't yours.\n`);
   } else {
-  const templateVars = { user_id: users[currentUser], id, longURL: longURL };
-  res.render("urls_show", templateVars);
+    const templateVars = { user_id: users[currentUser], id, longURL: longURL };
+    res.render("urls_show", templateVars);
   }
 });
 
@@ -118,25 +114,25 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-currentUser = req.session.user_id
+  currentUser = req.session.user_id;
   user = users[currentUser];
   if (!user) {
-    res.send("This id doesn't belong to you, please register and login")
+    res.send("This id doesn't belong to you, please register and login");
   } else {
-  urlDatabase[req.params.id].longURL = req.body.longURL
-  res.redirect('/urls');
-   }
+    urlDatabase[req.params.id].longURL = req.body.longURL;
+    res.redirect('/urls');
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
 
-  currentUser = req.session.user_id
+  currentUser = req.session.user_id;
   user = users[currentUser];
   if (!user) {
-    res.send("This id doesn't belong to you, please register and login")
-  } else { 
+    res.send("This id doesn't belong to you, please register and login");
+  } else {
     delete urlDatabase[req.params.id];
-  res.redirect('/urls');
+    res.redirect('/urls');
   }
 });
 
@@ -155,33 +151,31 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-    if (email == "" || email == null || password == "" || password == null) {
-      res.status(400).send('Error: Email and Password cannot be empty');
-    }
-    if (getUserByEmail(email, users)) {
-      res.status(400).send('Error: Email already exists in the database');
-    }
+  if (email == "" || email == null || password == "" || password == null) {
+    res.status(400).send('Error: Email and Password cannot be empty');
+  }
+  if (getUserByEmail(email, users)) {
+    res.status(400).send('Error: Email already exists in the database');
+  }
     
   const newID = generateRandomString();
-  users[newID] = { 
+  users[newID] = {
     id: newID,
     email: email,
-    password: hashedPassword 
-  }
+    password: hashedPassword
+  };
   req.session.user_id = newID;
-  // console.log(newID);
-  // console.log(users);
-  res.redirect("/urls"); // redirects back to urls
+  res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (user) {
-  res.redirect("/urls");
+    res.redirect("/urls");
   } else {
-  const templateVars = {user_id: user };
-  res.render("urls_login", templateVars);
+    const templateVars = {user_id: user };
+    res.render("urls_login", templateVars);
   }
 });
 
@@ -192,17 +186,16 @@ app.post("/login", (req, res) => {
 
   if (!userCheck) {
     res.status(403).send('Email not found');
-  } 
-  if (bcrypt.compareSync(passwordUsed, userCheck.password)) {
+  }
+  if (!bcrypt.compareSync(passwordUsed, userCheck.password)) {
     res.status(403).send('Incorrect password, please try again');
   } else {
-  req.session.user_id = userCheck.id
-  res.redirect("/urls")
+    req.session.user_id = userCheck.id;
+    res.redirect("/urls");
   }
 });
 
 app.post("/logout", (req, res) => {
   req.session = null;
-    //destroys the current session upon logout
-    res.redirect('/urls');
-  });
+  res.redirect('/urls');
+});
