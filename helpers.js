@@ -13,8 +13,19 @@ const getUserByEmail = function(userEmail, userDB) {
   return null;
 };
 
+const urlsForUser = (id, database) => {
+  let currentUserID = id;
+  let usersURL = {};
+  for (let key in database) {
+    if (database[key].userID === currentUserID) {
+      usersURL[key] = database[key];
+    }
+  }
+  return usersURL;
+};
 
 module.exports = {
   generateRandomString, 
-  getUserByEmail
+  getUserByEmail,
+  urlsForUser
 }
