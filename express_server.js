@@ -2,28 +2,26 @@ const { application } = require("express");
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const { generateRandomString, getUserByEmail } = require('./helpers')
 const app = express();
 const PORT = 8080;
-
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+
+
 app.use(cookieSession({  
   name: 'session',
 keys: ['heisenberg'],
+
 // Cookie Options
 maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
 
-
-
-
-
-
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -53,29 +51,6 @@ const urlDatabase = {
   },
 };
 
-const generateRandomString = function() {
-  return Math.random().toString(36).substring(2, 8);
-};
-
-const getUserByEmail = (userEmail, userDB) => {
-  for (let key in userDB) {
-    if (userEmail === userDB[key].email) {
-      return userDB[key];
-    }
-  }
-  return null;
-};
-
-
-const urlsForUser = (id, urlDatabase) => {
-  let userURLs = {};
-  for (let shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      userURLs[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userURLs;
-};
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -124,10 +99,10 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  console.log(urlDatabase)
   const templateVars = { shortURL: shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user_id: users[req.session.user_id]};
   res.render("urls_show", templateVars);
 });
-
 
 
 app.get("/register", (req, res) => {
@@ -165,7 +140,9 @@ app.post("/urls/:shortURL", (req, res) => {
   }
   
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+
   res.redirect(`/urls`);
+
 //   let longURL = req.body.longURL;
 //   urlDatabase[req.params.shortURL] = longURL;
 //   res.redirect(`/urls/${req.params.shortURL}`);
