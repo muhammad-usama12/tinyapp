@@ -94,7 +94,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls/:id/edit", (req, res) => {
   currentUser = req.session.user_id;
-  user = users[currentUser];
+  const user = users[currentUser];
   if (!user) {
     res.send("This id doesn't belong to you, please register and login");
   } else {
@@ -130,7 +130,7 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  if (email == "" || email == null || password == "" || password == null) {
+  if (!email || !password) {
     res.status(400).send('Error: Email and Password cannot be empty');
   }
   if (getUserByEmail(email, users)) {
