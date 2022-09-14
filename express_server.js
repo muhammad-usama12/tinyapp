@@ -3,14 +3,15 @@ const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers');
-const { users, urlDatabase } = require('./database')
+const { users, urlDatabase } = require('./database');
 const app = express();
 const PORT = 8080;
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 
-app.use(cookieSession({ //encrypts cookie session 
+
+app.use(cookieSession({ //encrypts cookie session
   name: 'session',
   keys: ['heisenberg'],
 
@@ -22,7 +23,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { //redirect new users to register and logged in users to myURLs page
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
@@ -35,11 +36,11 @@ app.get("/", (req, res) => {
 app.get('/urls', (req, res) => { //retrieves myURLs page if user is registered and logged in
   const currentUser = req.session.user_id;
   if (!currentUser) {
-    return res.status(400).send("Error 400: Bad Request - User must register and login\n") 
+    return res.status(400).send("Error 400: Bad Request - User must register and login\n");
   } else {
-  const user = users[currentUser];
-  const templateVars = { user_id: user, urls: urlsForUser(currentUser, urlDatabase) };
-  res.render("urls_index", templateVars);
+    const user = users[currentUser];
+    const templateVars = { user_id: user, urls: urlsForUser(currentUser, urlDatabase) };
+    res.render("urls_index", templateVars);
   }
 });
 
@@ -47,8 +48,8 @@ app.post("/urls", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-      return res.status(400).send("Error 400: Bad Request - User must register and login before adding new URLs\n")
-    } else {
+    return res.status(400).send("Error 400: Bad Request - User must register and login before adding new URLs\n");
+  } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[id] = { id: id, longURL: longURL, userID: req.session.user_id };
@@ -70,16 +71,16 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const currentUser = req.session.user_id;
   const id = req.params.id;
-  userUrls = urlsForUser(currentUser, urlDatabase)
+  const userUrls = urlsForUser(currentUser, urlDatabase);
 
-  if (!currentUser) { 
-    return res.status(400).send("Error 400: Bad Request - User must login first\n")
+  if (!currentUser) {
+    return res.status(400).send("Error 400: Bad Request - User must login first\n");
   }
   if (!urlDatabase[id]) {
-    return res.status(404).send("Error 404: Bad Request - This URL ID doesn't exist\n")
+    return res.status(404).send("Error 404: Bad Request - This URL ID doesn't exist\n");
   }
   if (currentUser && !urlDatabase[id][currentUser] && !userUrls[id]) {
-    return res.status(401).send("Error 401: Unauthorized\n")
+    return res.status(401).send("Error 401: Unauthorized\n");
   } else {
     const id = req.params.id;
     const longURL = urlDatabase[id].longURL;
@@ -89,33 +90,33 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const id = req.params.id
-   if (!urlDatabase[id]) {
-    return res.status(404).send("Error 404: Not Found - This URL ID doesn't exist\n")
-   } else {
-  const longURL = urlDatabase[req.params.id].longURL;
-  res.redirect(longURL);
-   }
+  const id = req.params.id;
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error 404: Not Found - This URL ID doesn't exist\n");
+  } else {
+    const longURL = urlDatabase[req.params.id].longURL;
+    res.redirect(longURL);
+  }
 });
 
-app.post("/urls/:id/edit", (req, res) => {
-  currentUser = req.session.user_id;
+app.post("/urls/:id/edit", (req, res) => { //lets logged in users edit their saved URL IDs
+  const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-   return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, please register and login\n") 
+    return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, please register and login\n");
   } else {
     urlDatabase[req.params.id].longURL = req.body.longURL;
     res.redirect('/urls');
   }
 });
 
-app.post("/urls/:id/delete", (req, res) => {
+app.post("/urls/:id/delete", (req, res) => { //lets logged in users delete their saved URL IDs
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   let id = req.params.id;
   if (!user) {
-    return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, cannot be deleted\n")
-    } else {
+    return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, cannot be deleted\n");
+  } else {
     delete urlDatabase[id];
     res.redirect('/urls');
   }
@@ -131,13 +132,13 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-app.post("/register", (req, res) => {
+app.post("/register", (req, res) => { //lets users register and save their info to the users database
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password) {
-   return res.status(403).send('Error 403: Forbidden - Email and Password cannot be empty\n');
+    return res.status(403).send('Error 403: Forbidden - Email and Password cannot be empty\n');
   }
   if (getUserByEmail(email, users)) {
     return res.status(400).send("Error 400: Bad Request - Email already exists in the database\n");
@@ -157,14 +158,14 @@ app.get("/login", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (user) {
-   return res.redirect("/urls");
+    return res.redirect("/urls");
   } else {
     const templateVars = {user_id: user };
     res.render("urls_login", templateVars);
   }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", (req, res) => { //lets registered users access their account and login
   const emailUsed = req.body.email;
   const passwordUsed = req.body.password;
   const userCheck = getUserByEmail(emailUsed, users);
@@ -173,10 +174,10 @@ app.post("/login", (req, res) => {
     return res.status(403).send("Error 403: Forbidden - Email not found\n");
   }
   if (!bcrypt.compareSync(passwordUsed, userCheck.password)) {
-   return res.status(403).send("Error 403: Forbidden - Incorrect password, please try again\n");
+    return res.status(403).send("Error 403: Forbidden - Incorrect password, please try again\n");
   } else {
     req.session.user_id = userCheck.id;
-   return res.redirect("/urls");
+    return res.redirect("/urls");
   }
 });
 
