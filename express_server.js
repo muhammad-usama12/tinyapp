@@ -3,13 +3,14 @@ const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { generateRandomString, getUserByEmail, urlsForUser} = require('./helpers');
+const { users, urlDatabase } = require('./database')
 const app = express();
 const PORT = 8080;
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 
-app.use(cookieSession({
+app.use(cookieSession({ //encrypts cookie session 
   name: 'session',
   keys: ['heisenberg'],
 
@@ -17,44 +18,41 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-
-const users = {};
-const urlDatabase = {};
 
 app.get("/", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-    res.redirect('/login');
+    return res.redirect('/login');
   } else {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
 });
 
-app.get('/urls', (req, res) => {
+app.get('/urls', (req, res) => { //retrieves myURLs page if user is registered and logged in
   const currentUser = req.session.user_id;
+  if (!currentUser) {
+    return res.status(400).send("Error 400: Bad Request - User must register and login\n") 
+  } else {
   const user = users[currentUser];
   const templateVars = { user_id: user, urls: urlsForUser(currentUser, urlDatabase) };
   res.render("urls_index", templateVars);
+  }
 });
 
 app.post("/urls", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-    res.redirect("/login");
-  } else {
+      return res.status(400).send("Error 400: Bad Request - User must register and login before adding new URLs")
+    } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
     urlDatabase[id] = { id: id, longURL: longURL, userID: req.session.user_id };
-    res.redirect(`/urls/${id}`);
+    return res.redirect(`/urls/${id}`);
   }
 });
 
@@ -62,7 +60,7 @@ app.get("/urls/new", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!currentUser) {
-    res.redirect("/login");
+    return res.redirect("/login");
   } else {
     const templateVars = { user_id: user };
     res.render("urls_new", templateVars);
@@ -70,33 +68,41 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  currentUser = req.session.user_id;
-  const user = users[currentUser];
+  const currentUser = req.session.user_id;
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
+  userUrls = urlsForUser(currentUser, urlDatabase)
 
-  if (user === urlDatabase[id]) {
-    res.status(403).send(`This id isn't yours.\n`);
+  if (!currentUser) { 
+    return res.status(400).send("Error 400: Bad Request - User must login first\n")
+  }
+  if (!urlDatabase[id]) {
+    return res.status(404).send("Error 404: This URL ID doesn't exist\n")
+  }
+  if (currentUser && !urlDatabase[id][currentUser] && !userUrls[id]) {
+    return res.status(401).send("Error 401: Unauthorized\n")
   } else {
+    const id = req.params.id;
+    const longURL = urlDatabase[id].longURL;
     const templateVars = { user_id: users[currentUser], id, longURL: longURL };
     res.render("urls_show", templateVars);
   }
 });
 
 app.get("/u/:id", (req, res) => {
-  const id = urlDatabase[req.params.id];
-  if (!id) {
-    return res.redirect(`/urls/${req.params.id}`);
-  }
+  const id = req.params.id
+   if (!urlDatabase[id]) {
+    return res.status(404).send("Error 404: Not Found - This URL ID doesn't exist\n")
+   } else {
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
+   }
 });
 
 app.post("/urls/:id/edit", (req, res) => {
   currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-    res.send("This id doesn't belong to you, please register and login");
+   return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, please register and login\n") 
   } else {
     urlDatabase[req.params.id].longURL = req.body.longURL;
     res.redirect('/urls');
@@ -104,13 +110,13 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-
-  currentUser = req.session.user_id;
-  user = users[currentUser];
+  const currentUser = req.session.user_id;
+  const user = users[currentUser];
+  let id = req.params.id;
   if (!user) {
-    res.send("This id doesn't belong to you, please register and login");
-  } else {
-    delete urlDatabase[req.params.id];
+    return res.status(400).send("Error 400: Bad Request - This ID doesn't belong to you, cannot be deleted\n")
+    } else {
+    delete urlDatabase[id];
     res.redirect('/urls');
   }
 });
@@ -119,7 +125,7 @@ app.get("/register", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (user) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
   const templateVars = { user_id: users[req.session.user_id] };
   res.render("urls_register", templateVars);
@@ -131,10 +137,10 @@ app.post("/register", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password) {
-    res.status(400).send('Error: Email and Password cannot be empty');
+   return res.status(403).send('Error 403: Forbidden - Email and Password cannot be empty\n');
   }
   if (getUserByEmail(email, users)) {
-    res.status(400).send('Error: Email already exists in the database');
+    return res.status(400).send("Error 400: Bad Request - Email already exists in the database\n");
   }
     
   const newID = generateRandomString();
@@ -144,14 +150,14 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   };
   req.session.user_id = newID;
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (user) {
-    res.redirect("/urls");
+   return res.redirect("/urls");
   } else {
     const templateVars = {user_id: user };
     res.render("urls_login", templateVars);
@@ -164,17 +170,21 @@ app.post("/login", (req, res) => {
   const userCheck = getUserByEmail(emailUsed, users);
 
   if (!userCheck) {
-    res.status(403).send('Email not found');
+    return res.status(403).send("Email not found\n");
   }
   if (!bcrypt.compareSync(passwordUsed, userCheck.password)) {
-    res.status(403).send('Incorrect password, please try again');
+   return res.status(403).send("Incorrect password, please try again\n");
   } else {
     req.session.user_id = userCheck.id;
-    res.redirect("/urls");
+   return res.redirect("/urls");
   }
 });
 
-app.post("/logout", (req, res) => {
+app.post("/logout", (req, res) => { // logs current user out and negates cookie session
   req.session = null;
-  res.redirect('/urls');
+  return res.redirect('/urls');
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
