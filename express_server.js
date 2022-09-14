@@ -47,7 +47,7 @@ app.post("/urls", (req, res) => {
   const currentUser = req.session.user_id;
   const user = users[currentUser];
   if (!user) {
-      return res.status(400).send("Error 400: Bad Request - User must register and login before adding new URLs")
+      return res.status(400).send("Error 400: Bad Request - User must register and login before adding new URLs\n")
     } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
@@ -76,7 +76,7 @@ app.get("/urls/:id", (req, res) => {
     return res.status(400).send("Error 400: Bad Request - User must login first\n")
   }
   if (!urlDatabase[id]) {
-    return res.status(404).send("Error 404: This URL ID doesn't exist\n")
+    return res.status(404).send("Error 404: Bad Request - This URL ID doesn't exist\n")
   }
   if (currentUser && !urlDatabase[id][currentUser] && !userUrls[id]) {
     return res.status(401).send("Error 401: Unauthorized\n")
@@ -170,10 +170,10 @@ app.post("/login", (req, res) => {
   const userCheck = getUserByEmail(emailUsed, users);
 
   if (!userCheck) {
-    return res.status(403).send("Email not found\n");
+    return res.status(403).send("Error 403: Forbidden - Email not found\n");
   }
   if (!bcrypt.compareSync(passwordUsed, userCheck.password)) {
-   return res.status(403).send("Incorrect password, please try again\n");
+   return res.status(403).send("Error 403: Forbidden - Incorrect password, please try again\n");
   } else {
     req.session.user_id = userCheck.id;
    return res.redirect("/urls");
