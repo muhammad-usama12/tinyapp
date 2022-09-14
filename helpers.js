@@ -10,7 +10,7 @@ const getUserByEmail = function(userEmail, userDB) {
       return userDB[key];
     }
   }
-  return null;
+  return undefined;
 };
 
 const urlsForUser = (id, database) => {
